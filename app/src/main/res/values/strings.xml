@@ -1,0 +1,91 @@
+<resources>
+    <string name="app_name">مسیریابی امیرکبیر</string>
+
+
+    <string name="nav_home"></string>
+    <string name="nav_fqa">سوالات متداول</string>
+    <string name="nav_settings">تنظیمات</string>
+    <string name="nav_tamas_ba_ma">تماس با ما</string>
+    <string name="nav_share">اشتراک کذاری</string>
+    <string name="nav_exit">خروج</string>
+
+    <string-array name="nav_item_activity_titles">
+        <item> </item>
+        <item>صفحه اصلی</item>
+        <item>تنظیمات</item>
+        <item>اشتراک کذاری</item>
+        <item>تماس با ما</item>
+        <item>سوالات متداول</item>
+        <item>خروج</item>
+    </string-array>
+
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="openDrawer">open_drawer</string>
+    <string name="closeDrawer">close_drawer</string>
+
+    <string name="hospital">مراکز درمانی</string>
+    <string name="agents">نمایندگان</string>
+    <string name="branch">شعب و باجه ها</string>
+    <string name="sarmad">ساختمان مرکزی</string>
+    <string name="cancel">انصراف</string>
+    <string name="accept">تایید</string>
+
+
+    <string name="hame_marakez">همه مراکز</string>
+    <string name="azmayeshgah">آزمایشگاه</string>
+    <string name="andoscopy">آندوسکپی</string>
+    <string name="optometri">اپتومتری</string>
+    <string name="eco">اکو و تست ورزش</string>
+    <string name="bimarestan">بیمارستان</string>
+    <string name="paraclinic">پاراکلینیک</string>
+    <string name="pezeshki_hastei">پزشکی هسته ای</string>
+    <string name="darookhaneh">داروخانه</string>
+    <string name="darmangah">درمانگاه</string>
+    <string name="dandanpezeshki">دندانپزشکی</string>
+    <string name="fizio">فیزیوتراپی</string>
+    <string name="sayer">سایر</string>
+    <string name="sangshekan">سنگ شکن</string>
+    <string name="eynaksazi">عینک سازی</string>
+    <string name="clinic">کلینیک</string>
+    <string name="tasvirbardari">مرکز تصویر برداری</string>
+    <string name="jarahi">مرکز جراحی محدود</string>
+    <string name="cheshm">مرکز چشم پزشکی</string>
+    <string name="sanjesh">مرکز سنجش تراکم استخوان</string>
+    <string name="matab">مطب</string>
+    <string name="provinces">همه استان ها</string>
+    <string name="east_azarbaijan">آذربایجان شرقی</string>
+    <string name="west_azarbaijan">آذربایجان غربی</string>
+    <string name="ardabil">اردبیل</string>
+    <string name="isfahan">اصفهان</string>
+    <string name="alborz">البرز</string>
+    <string name="eilam">ایلام</string>
+    <string name="booshehr">بوشهر</string>
+    <string name="tehran">تهران</string>
+    <string name="charmahal">چهارمحال بختیاری</string>
+    <string name="south_khorasan">خراسان جنوبی</string>
+    <string name="razavi_khorasan">خراسان رضوی</string>
+    <string name="north_khorasan">خراسان شمالی</string>
+    <string name="khoozestan">خوزستان</string>
+    <string name="zanjan">زنجان</string>
+    <string name="semnan">سمنان</string>
+    <string name="sistan">سیستان و بلوچستان</string>
+    <string name="fars">فارس</string>
+    <string name="qazvin">قزوین</string>
+    <string name="qom">قم</string>
+    <string name="kurdistan">کردستان</string>
+    <string name="kerman">کرمان</string>
+    <string name="kermanshah">کرمانشاه</string>
+    <string name="kohkiloye">کهکیلویه و بویراحمد</string>
+    <string name="golestan">گلستان</string>
+    <string name="guilan">گیلان</string>
+    <string name="lurestan">لرستان</string>
+    <string name="mazandaran">مازندران</string>
+    <string name="markazi">مرکزی</string>
+    <string name="hormozgan">هرمزگان</string>
+    <string name="hamadan">همدان</string>
+    <string name="yazd">یزد</string>
+    <string name="captureText">ثبت تصویر</string>
+    <string name="detectText">شروع مسیربابی</string>
+</resources>

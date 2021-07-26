@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#19428B</color>
+    <color name="primary_dark">#19428B</color>
+    <color name="accent">#00C600</color>
+    <color name="text_primary">#666666</color>
+    <color name="text_secondary">#B7B7B7</color>
+    <color name="background">#FFFFFF</color>
+    <color name="background_secondary">#F7F7F7</color>
+    <color name="divider">#E6E6E6</color>
+
+    <color name="colorPrimary">#6200EE</color>
+    <color name="colorPrimaryDark">#3700B3</color>
+    <color name="colorPrimarySuperDark">#26007A</color>
+
+    <color name="fancyRed">#FF6A64</color>
+    <color name="violet">#662D91</color>
+    <color name="darkBlue">#19428B</color>
+    <color name="lightBlue">#3F81CF</color>
+    <color name="club">#0097C2</color>
+    <color name="teal">#6CC8AE</color>
+    <color name="cyan">#28ebc0</color>
+    <color name="black">#000000</color>
+    <color name="green">#39DDA0</color>
+    <color name="green2">#BDD72C</color>
+    <color name="green3">#8CC63F</color>
+    <color name="green4">#39B54A</color>
+    <color name="green5">#009245</color>
+    <color name="green6">#006837</color>
+    <color name="green7">#004B00</color>
+    <color name="green8">#002E00</color>
+    <color name="green9">#1a221f</color>
+    <color name="rose">#FF003E</color>
+
+    <color name="purple">#7c08d5</color>
+    <color name="orange">#f4750d</color>
+
+    <color name="ic_launcher_background">#FFFFFF</color>
+
+</resources>

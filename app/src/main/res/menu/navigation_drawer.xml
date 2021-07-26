@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto">
+<!--	android:layoutDirection="ltr"-->
+<!--	android:textDirection="ltr"-->
+<!--	android:layout_gravity="end"-->
+
+	<group android:checkableBehavior="none">
+		<item
+			android:id="@+id/nav_home"
+			android:icon="@drawable/ic_home_black_24dp"
+
+			android:title="صفحه اصلی" />
+
+
+		<!--<item
+			android:id="@+id/nav_gallery"
+			android:icon="@drawable/ic_photo_black_24dp"
+			android:title="گالری عکس" />-->
+
+		<item
+			android:id="@+id/nav_settings"
+			android:icon="@drawable/ic_settings_black_24dp"
+			android:title="تنظیمات" />
+
+		<item
+			android:id="@+id/nav_share"
+			android:icon="@drawable/ic_share_black_24dp"
+			android:title="اشتراک گذاری" />
+
+		<item
+			android:id="@+id/nav_contactus"
+			android:icon="@drawable/ic_call_black_24dp"
+			android:title="تماس با ما" />
+
+		<item
+			android:id="@+id/nav_questions"
+			android:icon="@drawable/ic_voice_black_24dp"
+			android:title="سوالات متداول" />
+
+		<item
+		   android:id="@+id/nav_logout"
+		   android:icon="@drawable/ic_exit_to_app_black_24dp"
+		   android:title="خروج" />
+	</group>
+
+</menu>
