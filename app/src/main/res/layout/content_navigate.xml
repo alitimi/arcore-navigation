@@ -35,24 +35,24 @@
             android:background="@color/lightBlue"
             android:text="@string/detectText" />
 
-<!--        <Button-->
-<!--            android:id="@+id/selectbtnid"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_weight="1"-->
-<!--            android:text="Gallery" />-->
+        <!--        <Button-->
+        <!--            android:id="@+id/selectbtnid"-->
+        <!--            android:layout_width="wrap_content"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:layout_weight="1"-->
+        <!--            android:text="Gallery" />-->
     </LinearLayout>
-<!--
-    <fragment
-        android:id="@+id/cam_fragment"
-        android:name="com.google.ar.sceneform.ux.ArFragment"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/options_layout"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintVertical_chainStyle="spread"
-        app:layout_constraintVertical_weight="9"/>
--->
+    <!--
+        <fragment
+            android:id="@+id/cam_fragment"
+            android:name="com.google.ar.sceneform.ux.ArFragment"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toBottomOf="@id/options_layout"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintVertical_chainStyle="spread"
+            app:layout_constraintVertical_weight="9"/>
+    -->
     <fragment
         android:id="@+id/cam_fragment"
         android:name="com.aut.navigation.WritingArFragment"

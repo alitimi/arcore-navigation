@@ -28,13 +28,13 @@ sceneform.asset('sampledata/models/Arrow_Left_Zneg.obj',
         'src/main/assets/Arrow_Left_Zneg')
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 28
 
 
     defaultConfig {
         applicationId "com.aut.navigation"
         minSdkVersion 21
-        targetSdkVersion 30
+        targetSdkVersion 28
         versionCode 1
         versionName "1.0"
 
@@ -46,6 +46,10 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
 }
@@ -63,4 +67,5 @@ dependencies {
     implementation 'com.android.support:multidex:1.0.3'
     implementation 'com.google.ar:core:1.4.0'
     implementation 'com.google.ar.sceneform.ux:sceneform-ux:1.8.0'
+    implementation("com.journeyapps:zxing-android-embedded:3.6.0") { transitive = false }
 }

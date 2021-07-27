@@ -1,7 +1,6 @@
 package com.aut.navigation;
 
 import android.Manifest;
-
 import com.google.ar.sceneform.ux.ArFragment;
 
 public class WritingArFragment extends ArFragment {
