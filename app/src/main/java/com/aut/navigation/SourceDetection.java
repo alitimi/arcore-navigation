@@ -30,7 +30,7 @@ import java.util.List;
 
 public class SourceDetection extends AppCompatActivity {
 
-    Button mCapture,mDetect,mGallery;
+    Button mCapture, mDetect, mGallery;
 
     ArFragment fragment;
     private PointerDrawable pointer = new PointerDrawable();
@@ -41,9 +41,9 @@ public class SourceDetection extends AppCompatActivity {
     String place;
     private Bitmap mBitmap;
     Uri uri;
-    String picpath = "",mSrc,mDest;
+    String picpath = "", mSrc, mDest;
     List<String> mNavInstructions;
-    static int mProceedFlag=0;
+    static int mProceedFlag = 0;
     private SensorManager sensorManager;
 
     static final int REQUEST_IMAGE_CAPTURE = 1;
@@ -70,24 +70,23 @@ public class SourceDetection extends AppCompatActivity {
 //        mGallery = (Button) findViewById(R.id.selectbtnid);
 
         mCapture.setOnClickListener(view -> {
-                IntentIntegrator intentIntegrator = new IntentIntegrator(this);
-                intentIntegrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
-                intentIntegrator.setCameraId(0);
-                intentIntegrator.setOrientationLocked(true);
-                intentIntegrator.setPrompt("scanning");
-                intentIntegrator.setBeepEnabled(true);
-                intentIntegrator.setBarcodeImageEnabled(false);
-                intentIntegrator.initiateScan();
+            IntentIntegrator intentIntegrator = new IntentIntegrator(this);
+            intentIntegrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
+            intentIntegrator.setCameraId(0);
+            intentIntegrator.setOrientationLocked(true);
+            intentIntegrator.setPrompt("scanning");
+            intentIntegrator.setBeepEnabled(true);
+            intentIntegrator.setBarcodeImageEnabled(false);
+            intentIntegrator.initiateScan();
         });
 
         mDetect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (mCapturedFlag == 1 || mGallerySelectFlag == 1) {
-                    mCapturedFlag=0;
-                    mGallerySelectFlag=0;
-                }
-                else
+                    mCapturedFlag = 0;
+                    mGallerySelectFlag = 0;
+                } else
                     Toast.makeText(getApplicationContext(), "No Image Captured", Toast.LENGTH_SHORT).show();
             }
         });
@@ -102,19 +101,21 @@ public class SourceDetection extends AppCompatActivity {
         IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
         if (result != null && result.getContents() != null) {
             new AlertDialog.Builder(this).setTitle("Scan Result").setMessage(result.getContents()).setPositiveButton("Copy", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                ClipboardManager manager = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-                ClipData data = ClipData.newPlainText("result", result.getContents());
-                manager.setPrimaryClip(data);
-            }
-        }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        }).create().show();
-    }
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    ClipboardManager manager = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                    ClipData data = ClipData.newPlainText("result", result.getContents());
+                    manager.setPrimaryClip(data);
+                    Intent mNextIntent = new Intent(SourceDetection.this, ArNavigate.class);
+                    startActivity(mNextIntent);
+                }
+            }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            }).create().show();
+        }
         super.onActivityResult(requestCode, resultCode, data);
     }
 }
