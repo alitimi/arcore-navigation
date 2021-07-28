@@ -12,6 +12,7 @@ import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -25,12 +26,13 @@ import androidx.core.content.ContextCompat;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
+import com.journeyapps.barcodescanner.CaptureActivity;
 
 import java.util.List;
 
 public class SourceDetection extends AppCompatActivity {
 
-    Button mCapture, mDetect, mGallery;
+    Button mCapture,mDetect,mGallery;
 
     ArFragment fragment;
     private PointerDrawable pointer = new PointerDrawable();
@@ -41,9 +43,9 @@ public class SourceDetection extends AppCompatActivity {
     String place;
     private Bitmap mBitmap;
     Uri uri;
-    String picpath = "", mSrc, mDest;
+    String picpath = "",mSrc,mDest;
     List<String> mNavInstructions;
-    static int mProceedFlag = 0;
+    static int mProceedFlag=0;
     private SensorManager sensorManager;
 
     static final int REQUEST_IMAGE_CAPTURE = 1;
@@ -70,24 +72,21 @@ public class SourceDetection extends AppCompatActivity {
 //        mGallery = (Button) findViewById(R.id.selectbtnid);
 
         mCapture.setOnClickListener(view -> {
-            IntentIntegrator intentIntegrator = new IntentIntegrator(this);
-            intentIntegrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE);
-            intentIntegrator.setCameraId(0);
-            intentIntegrator.setOrientationLocked(true);
-            intentIntegrator.setPrompt("scanning");
-            intentIntegrator.setBeepEnabled(true);
-            intentIntegrator.setBarcodeImageEnabled(false);
-            intentIntegrator.initiateScan();
+            IntentIntegrator integrator = new IntentIntegrator(SourceDetection.this);
+            integrator.setDesiredBarcodeFormats(IntentIntegrator.ALL_CODE_TYPES);
+            integrator.setPrompt("Scan");
+            integrator.setCameraId(0);
+            integrator.setBeepEnabled(false);
+            integrator.setBarcodeImageEnabled(false);
+            integrator.initiateScan();
+
         });
 
         mDetect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (mCapturedFlag == 1 || mGallerySelectFlag == 1) {
-                    mCapturedFlag = 0;
-                    mGallerySelectFlag = 0;
-                } else
-                    Toast.makeText(getApplicationContext(), "No Image Captured", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(SourceDetection.this, ArNavigate.class);
+                startActivity(intent);
             }
         });
 
@@ -97,25 +96,19 @@ public class SourceDetection extends AppCompatActivity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-        if (result != null && result.getContents() != null) {
-            new AlertDialog.Builder(this).setTitle("Scan Result").setMessage(result.getContents()).setPositiveButton("Copy", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    ClipboardManager manager = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-                    ClipData data = ClipData.newPlainText("result", result.getContents());
-                    manager.setPrimaryClip(data);
-                    Intent mNextIntent = new Intent(SourceDetection.this, ArNavigate.class);
-                    startActivity(mNextIntent);
-                }
-            }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                }
-            }).create().show();
+        if(result != null) {
+            if(result.getContents() == null) {
+                Log.e("Scan*******", "Cancelled scan");
+            } else {
+                Log.e("Scan", "Scanned");
+                place = result.getContents();
+                Toast.makeText(this, "Scanned: " + result.getContents(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            // This is important, otherwise the result will not be passed to the fragment
+            super.onActivityResult(requestCode, resultCode, data);
         }
-        super.onActivityResult(requestCode, resultCode, data);
     }
 }

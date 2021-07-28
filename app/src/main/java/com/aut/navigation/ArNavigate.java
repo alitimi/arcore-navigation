@@ -19,13 +19,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PersistableBundle;
-//import android.support.annotation.NonNull;
-//import android.support.annotation.RequiresApi;
-//import android.support.design.widget.BottomNavigationView;
-//import android.support.design.widget.Snackbar;
-//import android.support.v4.app.DialogFragment;
-//import android.support.v7.app.AlertDialog;
-//import android.support.v7.app.AppCompatActivity;
+
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -48,7 +42,7 @@ import com.google.ar.sceneform.ux.TransformableNode;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class ArNavigate extends AppCompatActivity {
+public class ArNavigate extends AppCompatActivity implements SensorEventListener, StepListener {
     private String source, destination;
     //AR variables
     ArFragment fragment;
@@ -57,9 +51,9 @@ public class ArNavigate extends AppCompatActivity {
     private boolean isHitting;
 
     //Sensor variables
-//    private StepDetector simpleStepDetector;
+    private StepDetector simpleStepDetector;
     private SensorManager sensorManager;
-    private Sensor accelerometer, magnetometer;
+    private Sensor accelerometer, magnetometer, barometer;
     private static int numSteps = 0;
     boolean magSensor = false;
     float[] rMat = new float[9];
@@ -77,25 +71,59 @@ public class ArNavigate extends AppCompatActivity {
     private int mInstructionCnt = 0;
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
-        super.onCreate(savedInstanceState, persistentState);
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_source_detection);
         fragment = (ArFragment)
                 getSupportFragmentManager().findFragmentById(R.id.cam_fragment);
         startNavigation();
 
-
     }
+
 
     public void startNavigation() {
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-//        simpleStepDetector = new StepDetector();
-//        simpleStepDetector.registerListener(this);
+        barometer = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
+        simpleStepDetector = new StepDetector();
+        simpleStepDetector.registerListener(this);
         numSteps = 0;
         sensorManager.registerListener((SensorEventListener) ArNavigate.this, accelerometer,
                 SensorManager.SENSOR_DELAY_FASTEST);
         sensorManager.registerListener((SensorEventListener) ArNavigate.this, magnetometer,
                 SensorManager.SENSOR_DELAY_UI);
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        Sensor sensor = sensorEvent.sensor;
+        float[] values = sensorEvent.values;
+        int value = -1;
+
+        if (values.length > 0) {
+            value = (int) values[0];
+        }
+
+
+        if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
+            numSteps++;
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
+    }
+
+    @Override
+    public void step(long timeNs) {
+        Toast.makeText(this, String.valueOf(numSteps), Toast.LENGTH_SHORT).show();
+        numSteps++;
+    }
+
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+
     }
 }

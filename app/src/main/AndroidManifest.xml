@@ -8,6 +8,9 @@
         android:name="android.hardware.camera.ar"
         android:required="true" />
 
+    <uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.camera.autofocus" />
+
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
@@ -20,6 +23,7 @@
         <meta-data
             android:name="com.google.ar.core"
             android:value="required" />
+        <activity android:name=".ArNavigate"/>
         <activity android:name=".SourceDetection"/>
         <activity android:name="com.aut.navigation.Destination"/>
         <activity android:name="com.aut.navigation.MainActivity">
