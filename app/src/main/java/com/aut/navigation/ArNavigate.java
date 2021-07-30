@@ -65,6 +65,9 @@ public class ArNavigate extends AppCompatActivity implements SensorEventListener
     private boolean mLastAccelerometerSet = false;
     private boolean mLastMagnetometerSet = false;
 
+    private double MagnitudePrevious = 0;
+
+
     //Instruction List variables
 //    Path[] mAllInstructionList = new Path[10];
     static int mInstructionNum = 0;
@@ -93,26 +96,42 @@ public class ArNavigate extends AppCompatActivity implements SensorEventListener
                 SensorManager.SENSOR_DELAY_FASTEST);
         sensorManager.registerListener((SensorEventListener) ArNavigate.this, magnetometer,
                 SensorManager.SENSOR_DELAY_UI);
+
+
     }
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        Sensor sensor = sensorEvent.sensor;
-        float[] values = sensorEvent.values;
-        int value = -1;
+//        Sensor sensor = sensorEvent.sensor;
+//        float[] values = sensorEvent.values;
+//        int value = -1;
+//
+//        if (values.length > 0) {
+//            value = (int) values[0];
+//        }
+//
+//
+//        if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
+//            numSteps++;
+//        }
+        if (sensorEvent!= null) {
+            float x_acceleration = sensorEvent.values[0];
+            float y_acceleration = sensorEvent.values[1];
+            float z_acceleration = sensorEvent.values[2];
+            double Magnitude = Math.sqrt(x_acceleration * x_acceleration + y_acceleration * y_acceleration + z_acceleration * z_acceleration);
+            double MagnitudeDelta = Magnitude - MagnitudePrevious;
+            MagnitudePrevious = Magnitude;
 
-        if (values.length > 0) {
-            value = (int) values[0];
+            if (MagnitudeDelta > 6) {
+                numSteps++;
+            }
         }
 
-
-        if (sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
-            numSteps++;
-        }
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
+//        sensorManager.registerListener(stepDetector, sensor, SensorManager.SENSOR_DELAY_NORMAL);
 
     }
 
@@ -125,5 +144,32 @@ public class ArNavigate extends AppCompatActivity implements SensorEventListener
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
 
+    }
+
+    protected void onPause() {
+        super.onPause();
+
+        SharedPreferences sharedPreferences = getPreferences(MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.clear();
+        editor.putInt("numSteps", numSteps);
+        editor.apply();
+    }
+
+    protected void onStop() {
+        super.onStop();
+
+        SharedPreferences sharedPreferences = getPreferences(MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.clear();
+        editor.putInt("stepCount", numSteps);
+        editor.apply();
+    }
+
+    protected void onResume() {
+        super.onResume();
+
+        SharedPreferences sharedPreferences = getPreferences(MODE_PRIVATE);
+        numSteps = sharedPreferences.getInt("numSteps", 0);
     }
 }
