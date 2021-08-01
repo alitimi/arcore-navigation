@@ -7,8 +7,8 @@ public class SensorFilter {
 
     static float sum(float[] array) {
         float retrieveValues = 0;
-        for (int i = 0; i < array.length; i++) {
-            retrieveValues+= array[i];
+        for (float v : array) {
+            retrieveValues += v;
         }
         return retrieveValues;
     }
@@ -23,22 +23,22 @@ public class SensorFilter {
 
     static float norm(float[] array) {
         float retrieveValues = 0;
-        for (int i = 0; i < array.length; i++) {
-            retrieveValues+= array[i] * array[i];
+        for (float v : array) {
+            retrieveValues += v * v;
         }
         return (float) Math.sqrt(retrieveValues);
     }
 
 
     static float dot(float[] a, float[] b) {
-        float retrieveValues = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-        return retrieveValues;
+        return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
     }
 
     public static float[] normalize(float[] a) {
         float[] retrieveValues = new float[a.length];
         float norm = norm(a);
-        for (int i = 0; i < a.length; i++) { retrieveValues[i] = a[i] / norm;
+        for (int i = 0; i < a.length; i++) {
+            retrieveValues[i] = a[i] / norm;
         }
         return retrieveValues;
     }

@@ -85,7 +85,7 @@ public class SourceDetection extends AppCompatActivity {
         mDetect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(SourceDetection.this, ArNavigate.class);
+                Intent intent = new Intent(SourceDetection.this, BasicNavigation.class);
                 startActivity(intent);
             }
         });

@@ -26,6 +26,7 @@
         <activity android:name=".ArNavigate"/>
         <activity android:name=".SourceDetection"/>
         <activity android:name="com.aut.navigation.Destination"/>
+        <activity android:name=".BasicNavigation"/>
         <activity android:name="com.aut.navigation.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
