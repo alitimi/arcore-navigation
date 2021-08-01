@@ -1,7 +1,6 @@
 package com.aut.navigation;
 
 public interface StepListener {
-
-    void step(long timeNs);
-
+    public void onStep();
+    public void passValue();
 }
