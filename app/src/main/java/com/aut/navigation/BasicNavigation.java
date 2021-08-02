@@ -90,6 +90,22 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
             simpleStepDetector.updateAccelerometer(
                     event.timestamp, event.values[0], event.values[1], event.values[2]);
         }
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            simpleStepDetector.updateAccelerometer(
+                    event.timestamp, event.values[0], event.values[1], event.values[2]);
+            System.arraycopy(event.values, 0, mLastAccelerometer, 0, event.values.length);
+            mLastAccelerometerSet = true;
+        }
+        else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+            System.arraycopy(event.values, 0, mLastMagnetometer, 0, event.values.length);
+            mLastMagnetometerSet = true;
+        }
+        if (mLastAccelerometerSet && mLastMagnetometerSet) {
+            SensorManager.getRotationMatrix(rMat, null, mLastAccelerometer, mLastMagnetometer);
+            SensorManager.getOrientation(rMat, orientation);
+            mAbsoluteDir = (int) (Math.toDegrees(SensorManager.getOrientation(rMat, orientation)[0]) + 360) % 360;
+            mAbsoluteDir = Math.round(mAbsoluteDir);
+        }
 
 
     }

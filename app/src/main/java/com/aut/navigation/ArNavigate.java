@@ -113,8 +113,6 @@ public class ArNavigate extends AppCompatActivity implements SensorEventListener
 //                SensorManager.SENSOR_DELAY_FASTEST);
 //        sensorManager.registerListener((SensorEventListener) ArNavigate.this, magnetometer,
 //                SensorManager.SENSOR_DELAY_UI);
-
-
     }
 
     @Override
@@ -140,7 +138,6 @@ public class ArNavigate extends AppCompatActivity implements SensorEventListener
         if (running) {
             numSteps = (int) event.values[0];
             runOnUiThread(() -> Toast.makeText(ArNavigate.this, String.valueOf(numSteps), Toast.LENGTH_SHORT).show());
-
         }
 
     }
@@ -149,46 +146,20 @@ public class ArNavigate extends AppCompatActivity implements SensorEventListener
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 
-//    public interface ICallback {
-//        public void stepsChanged(int value);
-//    }
-//
-//    private ICallback mCallback;
-//
-//    public void registerCallback(ICallback cb) {
-//        mCallback = cb;
-//        //mStepDisplayer.passValue();
-//        //mPaceListener.passValue();
-//    }
-//
-//    private void registerDetector() {
-//        mSensor = mSensorManager.getDefaultSensor(
-//                Sensor.TYPE_ACCELEROMETER /*|
-//            Sensor.TYPE_MAGNETIC_FIELD |
-//            Sensor.TYPE_ORIENTATION*/);
-//        mSensorManager.registerListener(mStepDetector,
-//                mSensor,
-//                SensorManager.SENSOR_DELAY_FASTEST);
-//    }
 
-//    private void unregisterDetector() {
-//        mSensorManager.unregisterListener(mStepDetector);
-//    }
-//
-//    private StepDisplayer.Listener mStepListener = new StepDisplayer.Listener() {
-//        public void stepsChanged(int value) {
-//            numSteps = value;
-//            runOnUiThread(() -> Toast.makeText(ArNavigate.this, String.valueOf(numSteps), Toast.LENGTH_SHORT).show());
-//            passValue();
-//        }
-//
-//        @Override
-//        public void passValue() {
-//            if (mCallback != null) {
-//                mCallback.stepsChanged(numSteps);
-//            }
-//        }
-//    };
+
+    public int getRange(int degree){
+        int mRangeVal=0;
+        if (degree>335 || degree <25)
+            mRangeVal=1;    //N
+        else if (degree>65 && degree <115)
+            mRangeVal=2;    //E
+        else if (degree>155 && degree <205)
+            mRangeVal=3;    //S
+        else if (degree>245 && degree <295)
+            mRangeVal=4;
+        return mRangeVal;
+    }
 
 
 //    @Override
