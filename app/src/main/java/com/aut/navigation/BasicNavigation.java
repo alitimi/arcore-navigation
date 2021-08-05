@@ -1,15 +1,14 @@
 package com.aut.navigation;
 
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
-import android.view.MenuItem;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -17,32 +16,71 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.ar.core.Anchor;
+import com.google.ar.core.Frame;
+import com.google.ar.core.HitResult;
+import com.google.ar.core.Plane;
+import com.google.ar.core.Trackable;
+import com.google.ar.core.TrackingState;
+import com.google.ar.sceneform.AnchorNode;
+import com.google.ar.sceneform.math.Quaternion;
+import com.google.ar.sceneform.math.Vector3;
+import com.google.ar.sceneform.rendering.ModelRenderable;
+import com.google.ar.sceneform.rendering.Renderable;
 import com.google.ar.sceneform.ux.ArFragment;
+import com.google.ar.sceneform.ux.TransformableNode;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class BasicNavigation extends AppCompatActivity implements SensorEventListener, StepListener {
 
     private StepDetector simpleStepDetector;
     private SensorManager sensorManager;
-    private Sensor accelerometer;
-    private int numSteps = 0, limNumSteps = -1;
-    ArFragment fragment;
+    private int numSteps = 0;
+    private ArFragment fragment;
 
+    String source;
+    String destination;
+    String src_dst;
+    HashMap<String, Integer> myPath = new HashMap<>();
+    private PointerDrawable pointer = new PointerDrawable();
+    private boolean isTracking;
+    private boolean isHitting;
 
-    private TextView mSrcMessage, mDestMessage, mNavMsg, mNumStepsMsg;
+    //    private TextView mSrcMessage, mDestMessage, mNavMsg, mNumStepsMsg;
+//    Button mStartNav, mStopNav;
+//    ListView mInstructionListView;
+//    int mDestNum = 0, mSrcNum = 0;
+//    int mDestGroup = 0, mSrcGroup = 0;
+//    int mDir = 0;
+//    int mStepsG1[] = {25, 15, 24, 14}, mStepsG2[] = {7, 25, 4, 24, 3, 20}, mStepsCross = 7;
+//    int mAryPtrSrc, mAryPtrDest;
+
     private int mListenerRegistered = 0;
-    Button mStartNav, mStopNav;
-    ListView mInstructionListView;
-    int mDestNum = 0, mSrcNum = 0;
-    int mDestGroup = 0, mSrcGroup = 0;
-    int mDir = 0;
-    int mStepsG1[] = {25, 15, 24, 14}, mStepsG2[] = {7, 25, 4, 24, 3, 20}, mStepsCross = 7;
-    int mAryPtrSrc, mAryPtrDest;
+
+    private final float[] mLastAccelerometer = new float[3];
+    private final float[] mLastMagnetometer = new float[3];
+    private boolean mLastAccelerometerSet = false;
+    private boolean mLastMagnetometerSet = false;
+
+    float[] rMat = new float[9];
+    float[] orientation = new float[3];
+    int mAbsoluteDir;
 
 
     @Override
@@ -50,38 +88,72 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_source_detection);
 
+        //Source and Destination String
+        Bundle b = getIntent().getExtras();
+        source = b.getString("source");
+        destination = b.getString("destination");
+        src_dst = source + '_' + destination;
+
+        //Sensors
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        Sensor magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         simpleStepDetector = new StepDetector();
         simpleStepDetector.registerListener(this);
         numSteps = 0;
-        sensorManager.registerListener(BasicNavigation.this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+        sensorManager.registerListener(BasicNavigation.this, accelerometer,
+                SensorManager.SENSOR_DELAY_FASTEST);
+        sensorManager.registerListener(BasicNavigation.this, magnetometer,
+                SensorManager.SENSOR_DELAY_UI);
         mListenerRegistered = 1;
+
+        //Reading the Related Path from Directions Json
+        try {
+            JSONObject obj = new JSONObject(loadJSONFromAsset());
+            JSONArray dirs = obj.getJSONArray("dirs");
+            JSONArray path = new JSONObject(dirs.get(0).toString()).getJSONArray("Entrance_Site");
+            for (int i = 0; i < path.length(); i++) {
+                String dir = String.valueOf(path.getJSONObject(i).toString().charAt(2));
+                Integer steps = Integer.valueOf(new JSONObject((path.getJSONObject(i).toString())).get(dir).toString());
+                myPath.put(dir, steps);
+            }
+
+//            if (Integer.valueOf(dir) == mAbsoluteDir) {
+//                if (steps != 0) {
+//                    steps -= 1;
+//                    runOnUiThread(() -> Toast.makeText(BasicNavigation.this, String.valueOf(steps), Toast.LENGTH_SHORT).show());
+//                } else {
+//                    runOnUiThread(() -> Toast.makeText(BasicNavigation.this, "siktir kon onvar", Toast.LENGTH_SHORT).show());
+//                }
+//            } else {
+//                runOnUiThread(() -> Toast.makeText(BasicNavigation.this, "masir Ghalat", Toast.LENGTH_SHORT).show());
+//            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        startNavigation();
+
         fragment = (ArFragment)
                 getSupportFragmentManager().findFragmentById(R.id.cam_fragment);
+    }
 
-
-        //initialise a new string array
-        String[] mEachInstruction = new String[]{};
-        // Create a List from String Array elements
-        final List<String> mAllInstructionList = new ArrayList<String>(Arrays.asList(mEachInstruction));
-        // Create an ArrayAdapter from List
-        final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>
-                (this, android.R.layout.simple_list_item_1, mAllInstructionList);
-        // DataBind ListView with items from ArrayAdapter
-//        mInstructionListView.setAdapter(arrayAdapter);
-        // Add new Items to List
-        //mAllInstructionList.add("inst1");
-        //mAllInstructionList.add("inst2");
-                /*
-                    notifyDataSetChanged ()
-                        Notifies the attached observers that the underlying
-                        data has been changed and any View reflecting the
-                        data set should refresh itself.
-                 */
-        //arrayAdapter.notifyDataSetChanged();
-
-
+    public void startNavigation() {
+        for (Map.Entry<String, Integer> e : myPath.entrySet()) {
+            int key = Integer.parseInt(e.getKey());
+            int value = e.getValue();
+            System.out.println("Key: " + e.getKey() + " Value: " + e.getValue());
+            while (key == mAbsoluteDir && numSteps < value) {
+                runOnUiThread(() -> Toast.makeText(BasicNavigation.this,
+                        "You are heading " + String.valueOf(key), Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> Toast.makeText(BasicNavigation.this,
+                        String.valueOf(numSteps), Toast.LENGTH_SHORT).show());
+                if (numSteps == value) {
+                    runOnUiThread(() -> Toast.makeText(BasicNavigation.this, "You walked " + String.valueOf(numSteps) + "toward " + String.valueOf(mAbsoluteDir), Toast.LENGTH_SHORT).show());
+                }
+            }
+            numSteps = 0;
+        }
     }
 
     @Override
@@ -95,8 +167,7 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
                     event.timestamp, event.values[0], event.values[1], event.values[2]);
             System.arraycopy(event.values, 0, mLastAccelerometer, 0, event.values.length);
             mLastAccelerometerSet = true;
-        }
-        else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+        } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
             System.arraycopy(event.values, 0, mLastMagnetometer, 0, event.values.length);
             mLastMagnetometerSet = true;
         }
@@ -104,7 +175,7 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
             SensorManager.getRotationMatrix(rMat, null, mLastAccelerometer, mLastMagnetometer);
             SensorManager.getOrientation(rMat, orientation);
             mAbsoluteDir = (int) (Math.toDegrees(SensorManager.getOrientation(rMat, orientation)[0]) + 360) % 360;
-            mAbsoluteDir = Math.round(mAbsoluteDir);
+            mAbsoluteDir = getRange(Math.round(mAbsoluteDir));
         }
 
 
@@ -118,8 +189,7 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
     @Override
     public void step(long timeNs) {
         numSteps++;
-        runOnUiThread(() -> Toast.makeText(BasicNavigation.this, String.valueOf(numSteps), Toast.LENGTH_SHORT).show());
-//        mNumStepsMsg.setText("Steps : " + numSteps);
+        int limNumSteps = -1;
         if (numSteps == limNumSteps) {
             mListenerRegistered = 0;
             sensorManager.unregisterListener(BasicNavigation.this);
@@ -127,4 +197,141 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
         }
 
     }
+
+    public int getRange(int degree) {
+        int mRangeVal = 0;
+        if (degree > 335 || degree < 25)
+            mRangeVal = 1;    //N
+        else if (degree > 65 && degree < 115)
+            mRangeVal = 2;    //E
+        else if (degree > 155 && degree < 205)
+            mRangeVal = 3;    //S
+        else if (degree > 245 && degree < 295)
+            mRangeVal = 4;    //W
+        return mRangeVal;
+    }
+
+    public String loadJSONFromAsset() {
+        String json = null;
+        try {
+            InputStream is = this.getAssets().open("directions.json");
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            json = new String(buffer, "UTF-8");
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return null;
+        }
+        return json;
+    }
+
+    //-----------------------------AR Object placement----------------------------------------------
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void addObject(Uri model) {
+        Frame frame = fragment.getArSceneView().getArFrame();
+        android.graphics.Point pt = getScreenCenter();
+        List<HitResult> hits;
+        if (frame != null) {
+            hits = frame.hitTest(pt.x, pt.y);
+            for (HitResult hit : hits) {
+                Trackable trackable = hit.getTrackable();
+                if (trackable instanceof Plane &&
+                        ((Plane) trackable).isPoseInPolygon(hit.getHitPose())) {
+                    placeObject(fragment, hit.createAnchor(), model);
+                    break;
+                }
+            }
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void placeObject(ArFragment fragment, Anchor anchor, Uri model) {
+        CompletableFuture<Void> renderableFuture =
+                ModelRenderable.builder()
+                        .setSource(fragment.getContext(), model)
+                        .build()
+                        .thenAccept(renderable -> addNodeToScene(fragment, anchor, renderable))
+                        .exceptionally((throwable -> {
+                            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                            builder.setMessage(throwable.getMessage())
+                                    .setTitle("Codelab error!");
+                            AlertDialog dialog = builder.create();
+                            dialog.show();
+                            return null;
+                        }));
+    }
+
+    private void addNodeToScene(ArFragment fragment, Anchor anchor, Renderable renderable) {
+        AnchorNode anchorNode = new AnchorNode(anchor);
+
+        //Handling Rotaional orientation using Quaternion
+        TransformableNode node = new TransformableNode(fragment.getTransformationSystem());
+        node.setLocalRotation(Quaternion.axisAngle(new Vector3(0, 1f, 0), 90f));
+
+        node.setRenderable(renderable);
+        node.setParent(anchorNode);
+        fragment.getArSceneView().getScene().addChild(anchorNode);
+        node.select();
+    }
+
+    //---------------------------AR green dot center detection methods------------------------------
+
+    private void onUpdate() {
+        boolean trackingChanged = updateTracking();
+        View contentView = findViewById(android.R.id.content);
+        if (trackingChanged) {
+            if (isTracking) {
+                contentView.getOverlay().add(pointer);
+            } else {
+                contentView.getOverlay().remove(pointer);
+            }
+            contentView.invalidate();
+        }
+
+        if (isTracking) {
+            boolean hitTestChanged = updateHitTest();
+            if (hitTestChanged) {
+                pointer.setEnabled(isHitting);
+                contentView.invalidate();
+            }
+        }
+    }
+
+    private boolean updateTracking() {
+        Frame frame = fragment.getArSceneView().getArFrame();
+        boolean wasTracking = isTracking;
+        isTracking = frame != null &&
+                frame.getCamera().getTrackingState() == TrackingState.TRACKING;
+        return isTracking != wasTracking;
+    }
+
+    private boolean updateHitTest() {
+        Frame frame = fragment.getArSceneView().getArFrame();
+        android.graphics.Point pt = getScreenCenter();
+        List<HitResult> hits;
+        boolean wasHitting = isHitting;
+        isHitting = false;
+        if (frame != null) {
+            hits = frame.hitTest(pt.x, pt.y);
+            for (HitResult hit : hits) {
+                Trackable trackable = hit.getTrackable();
+                if (trackable instanceof Plane &&
+                        ((Plane) trackable).isPoseInPolygon(hit.getHitPose())) {
+                    isHitting = true;
+                    break;
+                }
+            }
+        }
+        return wasHitting != isHitting;
+    }
+
+    private android.graphics.Point getScreenCenter() {
+        View vw = findViewById(android.R.id.content);
+        return new android.graphics.Point(vw.getWidth() / 2, vw.getHeight() / 2);
+    }
+
+    //----------------------------------------------------------------------------------------------
 }

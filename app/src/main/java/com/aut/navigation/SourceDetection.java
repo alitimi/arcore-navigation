@@ -47,7 +47,6 @@ public class SourceDetection extends AppCompatActivity {
     List<String> mNavInstructions;
     static int mProceedFlag=0;
     private SensorManager sensorManager;
-
     static final int REQUEST_IMAGE_CAPTURE = 1;
     static final int PICK_IMAGE = 7;
     public static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 123;
