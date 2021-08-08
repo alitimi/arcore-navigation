@@ -16,6 +16,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.Frame;
 import com.google.ar.core.HitResult;
@@ -23,6 +24,7 @@ import com.google.ar.core.Plane;
 import com.google.ar.core.Trackable;
 import com.google.ar.core.TrackingState;
 import com.google.ar.sceneform.AnchorNode;
+import com.google.ar.sceneform.TouchEventSystem;
 import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
@@ -41,6 +43,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import androidx.annotation.RequiresApi;
@@ -51,13 +54,13 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
 
     private StepDetector simpleStepDetector;
     private SensorManager sensorManager;
-    private int numSteps = 0;
+    private int numSteps;
     private ArFragment fragment;
 
     String source;
     String destination;
     String src_dst;
-    HashMap<String, Integer> myPath = new HashMap<>();
+    ArrayList<String> myPath = new ArrayList();
     private PointerDrawable pointer = new PointerDrawable();
     private boolean isTracking;
     private boolean isHitting;
@@ -81,18 +84,52 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
     float[] rMat = new float[9];
     float[] orientation = new float[3];
     int mAbsoluteDir;
+    boolean goNext = false;
+    private int mInstructionNum;
+    int index = 0;
 
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_source_detection);
+
+        mInstructionNum = 0;
 
         //Source and Destination String
         Bundle b = getIntent().getExtras();
         source = b.getString("source");
         destination = b.getString("destination");
         src_dst = source + '_' + destination;
+
+        //Reading the Related Path from Directions Json
+        try {
+            JSONObject obj = new JSONObject(loadJSONFromAsset());
+            JSONArray dirs = obj.getJSONArray("dirs");
+            JSONArray path = new JSONObject(dirs.get(0).toString()).getJSONArray("Entrance_Site");
+            for (int i = 0; i < path.length(); i++) {
+                String dir = String.valueOf(path.getJSONObject(i).toString().charAt(2));
+                Integer steps = Integer.valueOf(new JSONObject((path.getJSONObject(i).toString())).get(dir).toString());
+                myPath.add(dir + ' ' + String.valueOf(steps));
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        fragment = (ArFragment)
+                getSupportFragmentManager().findFragmentById(R.id.cam_fragment);
+        fragment.getArSceneView().getScene().addOnUpdateListener(frameTime -> {
+            fragment.onUpdate(frameTime);
+            onUpdate();
+        });
+        startNavigation();
+
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public void startNavigation() {
 
         //Sensors
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -107,54 +144,9 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
                 SensorManager.SENSOR_DELAY_UI);
         mListenerRegistered = 1;
 
-        //Reading the Related Path from Directions Json
-        try {
-            JSONObject obj = new JSONObject(loadJSONFromAsset());
-            JSONArray dirs = obj.getJSONArray("dirs");
-            JSONArray path = new JSONObject(dirs.get(0).toString()).getJSONArray("Entrance_Site");
-            for (int i = 0; i < path.length(); i++) {
-                String dir = String.valueOf(path.getJSONObject(i).toString().charAt(2));
-                Integer steps = Integer.valueOf(new JSONObject((path.getJSONObject(i).toString())).get(dir).toString());
-                myPath.put(dir, steps);
-            }
 
-//            if (Integer.valueOf(dir) == mAbsoluteDir) {
-//                if (steps != 0) {
-//                    steps -= 1;
-//                    runOnUiThread(() -> Toast.makeText(BasicNavigation.this, String.valueOf(steps), Toast.LENGTH_SHORT).show());
-//                } else {
-//                    runOnUiThread(() -> Toast.makeText(BasicNavigation.this, "siktir kon onvar", Toast.LENGTH_SHORT).show());
-//                }
-//            } else {
-//                runOnUiThread(() -> Toast.makeText(BasicNavigation.this, "masir Ghalat", Toast.LENGTH_SHORT).show());
-//            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        startNavigation();
-
-        fragment = (ArFragment)
-                getSupportFragmentManager().findFragmentById(R.id.cam_fragment);
     }
 
-    public void startNavigation() {
-        for (Map.Entry<String, Integer> e : myPath.entrySet()) {
-            int key = Integer.parseInt(e.getKey());
-            int value = e.getValue();
-            System.out.println("Key: " + e.getKey() + " Value: " + e.getValue());
-            while (key == mAbsoluteDir && numSteps < value) {
-                runOnUiThread(() -> Toast.makeText(BasicNavigation.this,
-                        "You are heading " + String.valueOf(key), Toast.LENGTH_SHORT).show());
-                runOnUiThread(() -> Toast.makeText(BasicNavigation.this,
-                        String.valueOf(numSteps), Toast.LENGTH_SHORT).show());
-                if (numSteps == value) {
-                    runOnUiThread(() -> Toast.makeText(BasicNavigation.this, "You walked " + String.valueOf(numSteps) + "toward " + String.valueOf(mAbsoluteDir), Toast.LENGTH_SHORT).show());
-                }
-            }
-            numSteps = 0;
-        }
-    }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -186,17 +178,44 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
 
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void step(long timeNs) {
-        numSteps++;
+        Snackbar snackbar;
         int limNumSteps = -1;
         if (numSteps == limNumSteps) {
             mListenerRegistered = 0;
             sensorManager.unregisterListener(BasicNavigation.this);
             numSteps = 0;
         }
+        numSteps++;
+        if (index < myPath.size()) {
+            String[] strings = myPath.get(index).split(" ");
+            Integer key = Integer.valueOf(strings[0]);
+            Integer value = Integer.valueOf(strings[1]);
+            if (mAbsoluteDir == key) {
+                snackbar = Snackbar.make(findViewById(android.R.id.content),
+                        "Correct Direction " + key, Snackbar.LENGTH_SHORT);
+                snackbar.show();
+                if (value == 0) {
+                    index++;
+                    Toast.makeText(BasicNavigation.this, "Next direction", Toast.LENGTH_SHORT).show();
+                }
+                if (numSteps == value) {
+                    Toast.makeText(BasicNavigation.this, "You walked " + numSteps, Toast.LENGTH_SHORT).show();
+                    numSteps = 0;
+                    index++;
+                }
+            }
+
+
+        } else if (index == myPath.size()) {
+            Toast.makeText(BasicNavigation.this, "You've reached your destination", Toast.LENGTH_SHORT).show();
+        }
+
 
     }
+
 
     public int getRange(int degree) {
         int mRangeVal = 0;
