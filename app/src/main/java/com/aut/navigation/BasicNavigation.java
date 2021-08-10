@@ -1,5 +1,6 @@
 package com.aut.navigation;
 
+import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -8,7 +9,11 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
+import android.os.SystemClock;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -21,6 +26,7 @@ import com.google.ar.core.Anchor;
 import com.google.ar.core.Frame;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.Plane;
+import com.google.ar.core.Point;
 import com.google.ar.core.Trackable;
 import com.google.ar.core.TrackingState;
 import com.google.ar.sceneform.AnchorNode;
@@ -87,6 +93,7 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
     boolean goNext = false;
     private int mInstructionNum;
     int index = 0;
+    Vibrator v;
 
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -102,12 +109,13 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
         source = b.getString("source");
         destination = b.getString("destination");
         src_dst = source + '_' + destination;
-
+        v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        ;
         //Reading the Related Path from Directions Json
         try {
             JSONObject obj = new JSONObject(loadJSONFromAsset());
             JSONArray dirs = obj.getJSONArray("dirs");
-            JSONArray path = new JSONObject(dirs.get(0).toString()).getJSONArray("Entrance_Site");
+            JSONArray path = new JSONObject(dirs.get(0).toString()).getJSONArray("Entrance_Council");
             for (int i = 0; i < path.length(); i++) {
                 String dir = String.valueOf(path.getJSONObject(i).toString().charAt(2));
                 Integer steps = Integer.valueOf(new JSONObject((path.getJSONObject(i).toString())).get(dir).toString());
@@ -143,8 +151,6 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
         sensorManager.registerListener(BasicNavigation.this, magnetometer,
                 SensorManager.SENSOR_DELAY_UI);
         mListenerRegistered = 1;
-
-
     }
 
 
@@ -169,7 +175,9 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
             mAbsoluteDir = (int) (Math.toDegrees(SensorManager.getOrientation(rMat, orientation)[0]) + 360) % 360;
             mAbsoluteDir = getRange(Math.round(mAbsoluteDir));
         }
-
+        if (event.sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
+            numSteps = (int) event.values[0];
+        }
 
     }
 
@@ -188,31 +196,80 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
             sensorManager.unregisterListener(BasicNavigation.this);
             numSteps = 0;
         }
-        numSteps++;
+
         if (index < myPath.size()) {
             String[] strings = myPath.get(index).split(" ");
             Integer key = Integer.valueOf(strings[0]);
             Integer value = Integer.valueOf(strings[1]);
             if (mAbsoluteDir == key) {
-                snackbar = Snackbar.make(findViewById(android.R.id.content),
-                        "Correct Direction " + key, Snackbar.LENGTH_SHORT);
-                snackbar.show();
-                if (value == 0) {
-                    index++;
-                    Toast.makeText(BasicNavigation.this, "Next direction", Toast.LENGTH_SHORT).show();
-                }
+                numSteps++;
+                Toast.makeText(this, "Correct Direction " + key + " : " + numSteps, Toast.LENGTH_SHORT).show();
+//                addObject(Uri.parse("Arrow_straight_Zneg.sfb"));
+
                 if (numSteps == value) {
-                    Toast.makeText(BasicNavigation.this, "You walked " + numSteps, Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(BasicNavigation.this, "You walked " + numSteps, Toast.LENGTH_SHORT).show();
                     numSteps = 0;
                     index++;
+
+                    if (index == myPath.size()) {
+                        Toast.makeText(BasicNavigation.this, "You've reached your destination", Toast.LENGTH_SHORT).show();
+                    } else {
+                        String[] strings2 = myPath.get(index).split(" ");
+                        Integer key2 = Integer.valueOf(strings2[0]);
+                        Toast.makeText(BasicNavigation.this, "Please Turn" + key2, Toast.LENGTH_SHORT).show();
+                    }
                 }
+            } else {
+                if (mAbsoluteDir == 1) {
+                    if (key == 2) {
+                        addObject(Uri.parse("Arrow_Right_Zneg.sfb"));
+                    }
+                    if (key == 3) {
+                        addObject(Uri.parse("Arrow_straight_Zpos.sfb"));
+                    }
+                    if (key == 4) {
+                        addObject(Uri.parse("Arrow_Left_Zneg.sfb"));
+                    }
+                }
+                if (mAbsoluteDir == 2) {
+                    if (key == 1) {
+                        addObject(Uri.parse("Arrow_Left_Zneg.sfb"));
+                    }
+                    if (key == 3) {
+                        addObject(Uri.parse("Arrow_Right_Zneg.sfb"));
+                    }
+                    if (key == 4) {
+                        addObject(Uri.parse("Arrow_straight_Zneg.sfb"));
+                    }
+                }
+                if (mAbsoluteDir == 3) {
+                    if (key == 1) {
+                        addObject(Uri.parse("Arrow_straight_Zneg.sfb"));
+                    }
+                    if (key == 2) {
+                        addObject(Uri.parse("Arrow_Left_Zneg.sfb"));
+                    }
+                    if (key == 4) {
+                        addObject(Uri.parse("Arrow_Right_Zneg.sfb"));
+                    }
+                }
+                if (mAbsoluteDir == 4) {
+                    if (key == 1) {
+                        addObject(Uri.parse("Arrow_Right_Zneg.sfb"));
+                    }
+                    if (key == 2) {
+                        addObject(Uri.parse("Arrow_straight_Zneg.sfb"));
+                    }
+                    if (key == 3) {
+                        addObject(Uri.parse("Arrow_Left_Zneg.sfb"));
+                    }
+                }
+                Toast.makeText(BasicNavigation.this, "Wrong direction, Turn" + key, Toast.LENGTH_SHORT).show();
             }
 
-
         } else if (index == myPath.size()) {
-            Toast.makeText(BasicNavigation.this, "You've reached your destination", Toast.LENGTH_SHORT).show();
+            Toast.makeText(BasicNavigation.this, "You've reached your destination2", Toast.LENGTH_SHORT).show();
         }
-
 
     }
 
@@ -249,17 +306,16 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
     //-----------------------------AR Object placement----------------------------------------------
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    private void addObject(Uri model) {
+    private void addObject(Uri uri) {
         Frame frame = fragment.getArSceneView().getArFrame();
         android.graphics.Point pt = getScreenCenter();
-        List<HitResult> hits;
         if (frame != null) {
-            hits = frame.hitTest(pt.x, pt.y);
-            for (HitResult hit : hits) {
+//            hits.addAll(frame.hitTest(pt.x, pt.y));
+            for (HitResult hit : frame.hitTest(pt.x, pt.y)) {
                 Trackable trackable = hit.getTrackable();
                 if (trackable instanceof Plane &&
                         ((Plane) trackable).isPoseInPolygon(hit.getHitPose())) {
-                    placeObject(fragment, hit.createAnchor(), model);
+                    placeObject(fragment, hit.createAnchor(), uri);
                     break;
                 }
             }
@@ -268,19 +324,29 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void placeObject(ArFragment fragment, Anchor anchor, Uri model) {
-        CompletableFuture<Void> renderableFuture =
-                ModelRenderable.builder()
-                        .setSource(fragment.getContext(), model)
-                        .build()
-                        .thenAccept(renderable -> addNodeToScene(fragment, anchor, renderable))
-                        .exceptionally((throwable -> {
-                            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                            builder.setMessage(throwable.getMessage())
-                                    .setTitle("Codelab error!");
-                            AlertDialog dialog = builder.create();
-                            dialog.show();
+        ModelRenderable.builder()
+                .setSource(fragment.getContext(), model)
+                .build()
+                .thenAccept(modelRenderable -> addNodeToScene(fragment, anchor, modelRenderable))
+                .exceptionally(throwable -> {
+                            Toast.makeText(fragment.getContext(), "Error:" + throwable.getMessage(), Toast.LENGTH_LONG).show();
                             return null;
-                        }));
+                        }
+
+                );
+//        CompletableFuture<Void> renderableFuture =
+//                ModelRenderable.builder()
+//                        .setSource(fragment.getContext(), model)
+//                        .build()
+//                        .thenAccept(renderable -> addNodeToScene(fragment, anchor, renderable))
+//                        .exceptionally((throwable -> {
+//                            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//                            builder.setMessage(throwable.getMessage())
+//                                    .setTitle("Codelab error!");
+//                            AlertDialog dialog = builder.create();
+//                            dialog.show();
+//                            return null;
+//                        }));
     }
 
     private void addNodeToScene(ArFragment fragment, Anchor anchor, Renderable renderable) {
@@ -288,7 +354,7 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
 
         //Handling Rotaional orientation using Quaternion
         TransformableNode node = new TransformableNode(fragment.getTransformationSystem());
-        node.setLocalRotation(Quaternion.axisAngle(new Vector3(0, 1f, 0), 90f));
+//        node.setLocalRotation(Quaternion.axisAngle(new Vector3(0, 1f, 0), 90f));
 
         node.setRenderable(renderable);
         node.setParent(anchorNode);
