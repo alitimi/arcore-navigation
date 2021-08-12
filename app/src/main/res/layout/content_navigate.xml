@@ -34,6 +34,13 @@
             android:layout_weight="1"
             android:background="@color/lightBlue"
             android:text="@string/detectText" />
+        <Button
+            android:id="@+id/done"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@color/lightBlue"
+            android:text="پایان" />
 
         <!--        <Button-->
         <!--            android:id="@+id/selectbtnid"-->

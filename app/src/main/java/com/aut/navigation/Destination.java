@@ -21,7 +21,11 @@ public class Destination extends AppCompatActivity {
 
     ListView listView;
     String place = null;
+    String place1;
+    String placefloor;
     String source;
+    String source1;
+    String floor;
     Button nav;
 
     @Override
