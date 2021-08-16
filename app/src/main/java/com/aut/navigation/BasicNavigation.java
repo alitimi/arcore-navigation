@@ -1,8 +1,6 @@
 package com.aut.navigation;
 
 import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -11,30 +9,18 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
-import android.os.SystemClock;
-import android.os.VibrationEffect;
 import android.os.Vibrator;
-import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.material.snackbar.Snackbar;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.Frame;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.Plane;
-import com.google.ar.core.Point;
 import com.google.ar.core.Trackable;
 import com.google.ar.core.TrackingState;
 import com.google.ar.sceneform.AnchorNode;
-import com.google.ar.sceneform.TouchEventSystem;
-import com.google.ar.sceneform.math.Quaternion;
-import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.Renderable;
 import com.google.ar.sceneform.ux.ArFragment;
@@ -47,15 +33,9 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class BasicNavigation extends AppCompatActivity implements SensorEventListener {
@@ -106,6 +86,16 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
 
     private String destinationPlace;
 
+    private Sensor sensorGravity;
+    // Gravity for accelerometer data
+    private float[] gravity = new float[3];
+    // smoothed values
+    private float[] smoothed = new float[3];
+
+    private float prevY;
+    private float threshold = 3f;
+
+
     public BasicNavigation() throws JSONException {
     }
 
@@ -119,7 +109,8 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
 
         done = findViewById(R.id.done);
         done.setOnClickListener(view -> {
-            Toast.makeText(BasicNavigation.this, "Steps : " + numSteps, Toast.LENGTH_SHORT).show();
+//                stepView.setText("Step Count: " + stepCount);
+            Toast.makeText(BasicNavigation.this, "Total Steps : " + numSteps, Toast.LENGTH_SHORT).show();
         });
 
 
@@ -174,7 +165,7 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
         Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         Sensor magnetometer = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         Sensor stepDetector = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
-        Sensor stepCounter = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+//        Sensor stepCounter = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         simpleStepDetector = new StepDetector();
 //        simpleStepDetector.registerListener(this);
         numSteps = 0;
@@ -183,8 +174,20 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
         sensorManager.registerListener(BasicNavigation.this, magnetometer,
                 SensorManager.SENSOR_DELAY_UI);
         sensorManager.registerListener(BasicNavigation.this, stepDetector, SensorManager.SENSOR_DELAY_NORMAL);
-        sensorManager.registerListener(BasicNavigation.this, stepCounter, SensorManager.SENSOR_DELAY_NORMAL);
         mListenerRegistered = 1;
+
+
+        // listen to these sensors
+
+    }
+
+
+    protected float[] lowPassFilter(float[] input, float[] output) {
+        if (output == null) return input;
+        for (int i = 0; i < input.length; i++) {
+            output[i] = output[i] + 1.0f * (input[i] - output[i]);
+        }
+        return output;
     }
 
 
@@ -195,12 +198,14 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             simpleStepDetector.updateAccelerometer(
                     event.timestamp, event.values[0], event.values[1], event.values[2]);
-        }
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            simpleStepDetector.updateAccelerometer(
-                    event.timestamp, event.values[0], event.values[1], event.values[2]);
             System.arraycopy(event.values, 0, mLastAccelerometer, 0, event.values.length);
             mLastAccelerometerSet = true;
+
+            //test
+            simpleStepDetector.updateAccelerometer(
+                    event.timestamp, event.values[0], event.values[1], event.values[2]);
+
+
         } else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
             System.arraycopy(event.values, 0, mLastMagnetometer, 0, event.values.length);
             mLastMagnetometerSet = true;
@@ -213,91 +218,82 @@ public class BasicNavigation extends AppCompatActivity implements SensorEventLis
         }
 
         if (event.sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
-            stepsFromDetector += (int) event.values[0];
-//            v.vibrate(100);
-            Toast.makeText(BasicNavigation.this, "From Detector : " + stepsFromDetector, Toast.LENGTH_SHORT).show();
-        }
-        if (event.sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
-//            v.vibrate(100);
-            if (stepsFromCounter < 1) {
-                stepsFromCounter = (int) event.values[0];
+            Toast.makeText(BasicNavigation.this, "From Detector : " + numSteps, Toast.LENGTH_SHORT).show();
+
+            if (index < myPath.size()) {
+                String[] strings = myPath.get(index).split(" ");
+                Integer key = Integer.valueOf(strings[0]);
+                Integer value = Integer.valueOf(strings[1]);
+                if (mAbsoluteDir == key) {
+                    numSteps += (int) event.values[0];
+                    Toast.makeText(this, "Correct Direction " + key + " : " + numSteps, Toast.LENGTH_SHORT).show();
+                    addObject(Uri.parse("Arrow_straight_Zneg.sfb"));
+
+                    if (numSteps == value) {
+                        Toast.makeText(BasicNavigation.this, "You walked " + numSteps, Toast.LENGTH_SHORT).show();
+                        numSteps = 0;
+                        index++;
+                        if (index == myPath.size()) {
+                            Toast.makeText(BasicNavigation.this, "You've reached your destination", Toast.LENGTH_SHORT).show();
+                        } else {
+                            String[] strings2 = myPath.get(index).split(" ");
+                            Integer key2 = Integer.valueOf(strings2[0]);
+                            Toast.makeText(BasicNavigation.this, "Please Turn" + key2, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                } else {
+                    if (mAbsoluteDir == 1) {
+                        if (key == 2) {
+                            addObject(Uri.parse("Arrow_Right_Zneg.sfb"));
+                        }
+                        if (key == 3) {
+                            addObject(Uri.parse("Arrow_straight_Zpos.sfb"));
+                        }
+                        if (key == 4) {
+                            addObject(Uri.parse("Arrow_Left_Zneg.sfb"));
+                        }
+                    }
+                    if (mAbsoluteDir == 2) {
+                        if (key == 1) {
+                            addObject(Uri.parse("Arrow_Left_Zneg.sfb"));
+                        }
+                        if (key == 3) {
+                            addObject(Uri.parse("Arrow_Right_Zneg.sfb"));
+                        }
+                        if (key == 4) {
+                            addObject(Uri.parse("Arrow_straight_Zneg.sfb"));
+                        }
+                    }
+                    if (mAbsoluteDir == 3) {
+                        if (key == 1) {
+                            addObject(Uri.parse("Arrow_straight_Zneg.sfb"));
+                        }
+                        if (key == 2) {
+                            addObject(Uri.parse("Arrow_Left_Zneg.sfb"));
+                        }
+                        if (key == 4) {
+                            addObject(Uri.parse("Arrow_Right_Zneg.sfb"));
+                        }
+                    }
+                    if (mAbsoluteDir == 4) {
+                        if (key == 1) {
+                            addObject(Uri.parse("Arrow_Right_Zneg.sfb"));
+                        }
+                        if (key == 2) {
+                            addObject(Uri.parse("Arrow_straight_Zneg.sfb"));
+                        }
+                        if (key == 3) {
+                            addObject(Uri.parse("Arrow_Left_Zneg.sfb"));
+                        }
+                    }
+                    Toast.makeText(BasicNavigation.this, "Wrong direction, Turn" + key, Toast.LENGTH_SHORT).show();
+                    numSteps = 0;
+                }
+
+
+            } else if (index == myPath.size()) {
+                Toast.makeText(BasicNavigation.this, "You've reached your destination2", Toast.LENGTH_SHORT).show();
             }
-//            stepsFromCounter = 0;
-            numSteps = (int) event.values[0] - stepsFromCounter;
-            Toast.makeText(BasicNavigation.this, "From Counter : " + numSteps, Toast.LENGTH_SHORT).show();
-//            if (index < myPath.size()) {
-//                String[] strings = myPath.get(index).split(" ");
-//                Integer key = Integer.valueOf(strings[0]);
-//                Integer value = Integer.valueOf(strings[1]);
-//                if (mAbsoluteDir == key) {
-//                    Toast.makeText(this, "Correct Direction " + key + " : " + numSteps, Toast.LENGTH_SHORT).show();
-////                addObject(Uri.parse("Arrow_straight_Zneg.sfb"));
-//
-//                    if (numSteps + 3 == value || numSteps - 3 == value) {
-////                    Toast.makeText(BasicNavigation.this, "You walked " + numSteps, Toast.LENGTH_SHORT).show();
-//                        numSteps = 0;
-//                        index++;
-//                        if (index == myPath.size()) {
-//                            Toast.makeText(BasicNavigation.this, "You've reached your destination", Toast.LENGTH_SHORT).show();
-//                        } else {
-//                            String[] strings2 = myPath.get(index).split(" ");
-//                            Integer key2 = Integer.valueOf(strings2[0]);
-//                            Toast.makeText(BasicNavigation.this, "Please Turn" + key2, Toast.LENGTH_SHORT).show();
-//                        }
-//                    }
-//                } else {
-//                    if (mAbsoluteDir == 1) {
-//                        if (key == 2) {
-//                            addObject(Uri.parse("Arrow_Right_Zneg.sfb"));
-//                        }
-//                        if (key == 3) {
-//                            addObject(Uri.parse("Arrow_straight_Zpos.sfb"));
-//                        }
-//                        if (key == 4) {
-//                            addObject(Uri.parse("Arrow_Left_Zneg.sfb"));
-//                        }
-//                    }
-//                    if (mAbsoluteDir == 2) {
-//                        if (key == 1) {
-//                            addObject(Uri.parse("Arrow_Left_Zneg.sfb"));
-//                        }
-//                        if (key == 3) {
-//                            addObject(Uri.parse("Arrow_Right_Zneg.sfb"));
-//                        }
-//                        if (key == 4) {
-//                            addObject(Uri.parse("Arrow_straight_Zneg.sfb"));
-//                        }
-//                    }
-//                    if (mAbsoluteDir == 3) {
-//                        if (key == 1) {
-//                            addObject(Uri.parse("Arrow_straight_Zneg.sfb"));
-//                        }
-//                        if (key == 2) {
-//                            addObject(Uri.parse("Arrow_Left_Zneg.sfb"));
-//                        }
-//                        if (key == 4) {
-//                            addObject(Uri.parse("Arrow_Right_Zneg.sfb"));
-//                        }
-//                    }
-//                    if (mAbsoluteDir == 4) {
-//                        if (key == 1) {
-//                            addObject(Uri.parse("Arrow_Right_Zneg.sfb"));
-//                        }
-//                        if (key == 2) {
-//                            addObject(Uri.parse("Arrow_straight_Zneg.sfb"));
-//                        }
-//                        if (key == 3) {
-//                            addObject(Uri.parse("Arrow_Left_Zneg.sfb"));
-//                        }
-//                    }
-//                    Toast.makeText(BasicNavigation.this, "Wrong direction, Turn" + key, Toast.LENGTH_SHORT).show();
-//                    numSteps = 0;
-//                }
-//
-//
-//            } else if (index == myPath.size()) {
-//                Toast.makeText(BasicNavigation.this, "You've reached your destination2", Toast.LENGTH_SHORT).show();
-//            }
 
         }
 

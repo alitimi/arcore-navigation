@@ -22,9 +22,9 @@ public class StepDetector {
 
     private StepListener listener;
 
-    void registerListener(StepListener listener) {
-        this.listener = listener;
-    }
+//    void registerListener(StepListener listener) {
+//        this.listener = listener;
+//    }
 
 
     void updateAccelerometer(long timeNs, float x, float y, float z) {
