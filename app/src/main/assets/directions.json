@@ -1,7 +1,7 @@
 {
   "dirs": [
     {
-      "Entrance_Site": [
+      "Entrance0_Site0": [
         {
           "1": 5
         },
@@ -9,7 +9,7 @@
           "2": 8
         }
       ],
-      "Entrance_Council": [
+      "Entrance0_Council0": [
         {
           "3": 10
         },
@@ -20,17 +20,135 @@
           "4": 5
         }
       ],
-      "Entrance_Exam": [
+      "Entrance0_Exam0": [
         {
           "1": 8
         }
       ],
-      "Entrance_Elevator1": [
+      "Entrance0_Elevator0": [
         {
           "1": 5
         },
         {
           "4": 2
+        }
+      ],
+      "Exam0_Site0": [
+        {
+          "2": 8
+        }
+      ],
+      "Exam0_Council0": [
+        {
+          "3": 3
+        },
+        {
+          "2": 3
+        }
+      ],
+      "Exam0_Entrance0": [
+        {
+          "3": 5
+        }
+      ],
+      "Exam0_Elevator0": [
+        {
+          "4": 3
+        }
+      ],
+      "Site0_Elevator0": [
+        {
+          "4": 20
+        }
+      ],
+      "Site0_Entrance0": [
+        {
+          "4": 8
+        },
+        {
+          "3": 5
+        }
+      ],
+      "Site0_Council0": [
+        {
+          "4": 8
+        },
+        {
+          "3": 2
+        },
+        {
+          "4": 2
+        }
+      ],
+      "Site0_Exam0": [
+        {
+          "4": 8
+        }
+      ],
+      "Council0_Elevator0": [
+        {
+          "1": 2
+        },
+        {
+          "4": 10
+        }
+      ],
+      "Council0_Entrance0": [
+        {
+          "4": 5
+        },
+        {
+          "3": 5
+        }
+      ],
+      "Council0_Exam0": [
+        {
+          "4": 3
+        },
+        {
+          "1": 3
+        }
+      ],
+      "Council0_Site0": [
+        {
+          "4": 2
+        },
+        {
+          "1": 2
+        },
+        {
+          "2": 8
+        }
+      ],
+      "Elevator1_EduBsc1": [
+        {
+          "2": 10
+        }
+      ],
+      "Elevator1_Class201_1": [
+        {
+          "2": 12
+        }
+      ],
+      "Elevator1_Class202_1": [
+        {
+          "2": 21
+        }
+      ],
+      "Elevator1_WomenWC_1": [
+        {
+          "2": 6
+        },
+        {
+          "3": 2
+        }
+      ],
+      "Elevator1_LabBagheri_1": [
+        {
+          "2": 6
+        },
+        {
+          "3": 2
         }
       ]
     }
